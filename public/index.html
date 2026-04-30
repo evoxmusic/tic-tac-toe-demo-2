@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <!-- ===== MENU SCREEN ===== -->
+    <div id="menu-screen" class="screen active">
+      <div class="menu-container">
+        <h1 class="title">Tic Tac Toe</h1>
+        <p class="subtitle">Choose your game mode</p>
+
+        <div class="name-input-group">
+          <label for="player-name">Your Name</label>
+          <input type="text" id="player-name" placeholder="Enter your name..." maxlength="50" autocomplete="off">
+        </div>
+
+        <div class="menu-buttons">
+          <button class="btn btn-primary" id="btn-single">
+            <span class="btn-icon">&#x1F916;</span>
+            Single Player
+          </button>
+          <button class="btn btn-secondary" id="btn-multi">
+            <span class="btn-icon">&#x1F30D;</span>
+            Online Multiplayer
+          </button>
+          <button class="btn btn-ghost" id="btn-leaderboard">
+            <span class="btn-icon">&#x1F3C6;</span>
+            Leaderboard
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DIFFICULTY SCREEN ===== -->
+    <div id="difficulty-screen" class="screen">
+      <div class="menu-container">
+        <h2 class="title-sm">Select Difficulty</h2>
+        <div class="menu-buttons">
+          <button class="btn btn-easy" data-difficulty="easy">
+            Easy
+            <span class="difficulty-desc">Random moves</span>
+          </button>
+          <button class="btn btn-medium" data-difficulty="medium">
+            Medium
+            <span class="difficulty-desc">Some strategy</span>
+          </button>
+          <button class="btn btn-hard" data-difficulty="hard">
+            Hard
+            <span class="difficulty-desc">Unbeatable</span>
+          </button>
+        </div>
+        <button class="btn btn-back" id="btn-back-menu">Back</button>
+      </div>
+    </div>
+
+    <!-- ===== MULTIPLAYER LOBBY ===== -->
+    <div id="lobby-screen" class="screen">
+      <div class="menu-container">
+        <h2 class="title-sm">Online Multiplayer</h2>
+        <div class="lobby-options">
+          <button class="btn btn-primary" id="btn-create-room">Create Room</button>
+          <div class="divider"><span>or</span></div>
+          <div class="join-group">
+            <input type="text" id="room-code-input" placeholder="Enter room code..." maxlength="4" autocomplete="off">
+            <button class="btn btn-secondary" id="btn-join-room">Join</button>
+          </div>
+        </div>
+        <div id="lobby-status" class="lobby-status hidden"></div>
+        <button class="btn btn-back" id="btn-back-menu-2">Back</button>
+      </div>
+    </div>
+
+    <!-- ===== GAME SCREEN ===== -->
+    <div id="game-screen" class="screen">
+      <div class="game-container">
+        <div class="game-header">
+          <div class="player-info player-x">
+            <span class="mark x-mark">X</span>
+            <span class="player-label" id="player-x-name">Player X</span>
+            <span class="score" id="score-x">0</span>
+          </div>
+          <div class="game-status" id="game-status">Your turn</div>
+          <div class="player-info player-o">
+            <span class="score" id="score-o">0</span>
+            <span class="player-label" id="player-o-name">Player O</span>
+            <span class="mark o-mark">O</span>
+          </div>
+        </div>
+
+        <div class="board-wrapper">
+          <div class="board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+          </div>
+          <svg class="win-line" id="win-line" viewBox="0 0 306 306">
+            <line x1="0" y1="0" x2="0" y2="0" />
+          </svg>
+        </div>
+
+        <div class="game-controls">
+          <button class="btn btn-ghost btn-sm" id="btn-quit">Quit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LEADERBOARD SCREEN ===== -->
+    <div id="leaderboard-screen" class="screen">
+      <div class="menu-container">
+        <h2 class="title-sm">Leaderboard</h2>
+        <div class="leaderboard-table-wrapper">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Player</th>
+                <th>W</th>
+                <th>L</th>
+                <th>D</th>
+                <th>Games</th>
+                <th>Win %</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+              <tr><td colspan="7" class="empty-state">No games played yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <button class="btn btn-back" id="btn-back-menu-3">Back</button>
+      </div>
+    </div>
+
+    <!-- ===== GAME OVER MODAL ===== -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-icon" id="modal-icon"></div>
+        <h2 class="modal-title" id="modal-title">Game Over</h2>
+        <p class="modal-message" id="modal-message"></p>
+        <div class="modal-buttons">
+          <button class="btn btn-primary" id="btn-rematch">Rematch</button>
+          <button class="btn btn-ghost" id="btn-modal-quit">Main Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/ai.js"></script>
+  <script src="/js/board.js"></script>
+  <script src="/js/multiplayer.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

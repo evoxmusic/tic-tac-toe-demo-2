@@ -1,0 +1,28 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# Docker
+docker-compose*.yml
+.dockerignore
+Dockerfile
+
+# Docs
+*.md
+LICENSE
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
