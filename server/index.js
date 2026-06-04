@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const http = require('http');
+const fs = require('fs');
 const { Server } = require('socket.io');
 const path = require('path');
 const pool = require('./db');
@@ -13,10 +14,31 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
+const BG_COLOR = process.env.BG_COLOR;
+
+const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 // ===== MIDDLEWARE =====
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// ===== INDEX (inject configurable background color via BG_COLOR) =====
+// Serves index.html, overriding the --bg-primary CSS variable when BG_COLOR
+// is set. Backward-compatible: without BG_COLOR the page renders unchanged.
+function serveIndex(req, res) {
+  fs.readFile(path.join(PUBLIC_DIR, 'index.html'), 'utf8', (err, html) => {
+    if (err) return res.status(500).send('Error loading page');
+    if (BG_COLOR) {
+      const safe = String(BG_COLOR).replace(/[<>"]/g, '');
+      const override = `<style>:root{--bg-primary:${safe} !important;}</style>`;
+      html = html.replace('</head>', `${override}\n</head>`);
+    }
+    res.type('html').send(html);
+  });
+}
+app.get('/', serveIndex);
+app.get('/index.html', serveIndex);
+
+app.use(express.static(PUBLIC_DIR));
 
 // ===== API ROUTES =====
 app.use('/api/scores', scoresRouter);
