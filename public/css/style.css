@@ -138,6 +138,14 @@ html, body {
   color: var(--text-muted);
 }
 
+/* Local 2-Player setup: tighten spacing between the two name inputs */
+#local-setup-screen .name-input-group {
+  margin-bottom: 16px;
+}
+#local-setup-screen .menu-buttons {
+  margin-top: 12px;
+}
+
 /* ===== BUTTONS ===== */
 .menu-buttons {
   display: flex;
