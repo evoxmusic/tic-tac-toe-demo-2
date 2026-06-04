@@ -7,6 +7,7 @@ const App = (() => {
   const screens = {
     menu: document.getElementById('menu-screen'),
     difficulty: document.getElementById('difficulty-screen'),
+    localSetup: document.getElementById('local-setup-screen'),
     lobby: document.getElementById('lobby-screen'),
     game: document.getElementById('game-screen'),
     leaderboard: document.getElementById('leaderboard-screen'),
@@ -14,6 +15,8 @@ const App = (() => {
 
   const els = {
     playerName: document.getElementById('player-name'),
+    localXName: document.getElementById('local-x-name'),
+    localOName: document.getElementById('local-o-name'),
     lobbyStatus: document.getElementById('lobby-status'),
     roomCodeInput: document.getElementById('room-code-input'),
     gameStatus: document.getElementById('game-status'),
@@ -30,7 +33,7 @@ const App = (() => {
 
   // ===== STATE =====
   let state = {
-    mode: null,           // 'single' or 'multi'
+    mode: null,           // 'single', 'local', or 'multi'
     difficulty: null,     // 'easy', 'medium', 'hard'
     board: Array(9).fill(null),
     currentTurn: 'X',
@@ -80,6 +83,19 @@ const App = (() => {
     updateHeader();
   }
 
+  function startLocalGame() {
+    state.mode = 'local';
+    state.difficulty = null;
+    state.myMark = 'X';
+    state.playerXName = els.localXName.value.trim() || 'Player X';
+    state.playerOName = els.localOName.value.trim() || 'Player O';
+    state.isMyTurn = true;
+    state.scores = { X: 0, O: 0 };
+    resetGame();
+    showScreen('game');
+    updateHeader();
+  }
+
   function resetGame() {
     state.board = Array(9).fill(null);
     state.currentTurn = 'X';
@@ -102,6 +118,9 @@ const App = (() => {
     if (!state.gameActive) return;
     if (state.mode === 'single') {
       els.gameStatus.textContent = state.currentTurn === state.myMark ? 'Your turn' : 'AI thinking...';
+    } else if (state.mode === 'local') {
+      const name = state.currentTurn === 'X' ? state.playerXName : state.playerOName;
+      els.gameStatus.textContent = `${name}'s turn (${state.currentTurn})`;
     } else {
       els.gameStatus.textContent = state.isMyTurn ? 'Your turn' : "Opponent's turn";
     }
@@ -159,11 +178,15 @@ const App = (() => {
                  (state.mode === 'multi' && winner === state.myMark);
 
     setTimeout(() => {
-      showGameOverModal(
-        isMe ? 'victory' : 'defeat',
-        isMe ? 'You Win!' : `${winnerName} Wins!`,
-        isMe ? 'Great job!' : 'Better luck next time.'
-      );
+      if (state.mode === 'local') {
+        showGameOverModal('victory', `${winnerName} Wins!`, 'Nicely played!');
+      } else {
+        showGameOverModal(
+          isMe ? 'victory' : 'defeat',
+          isMe ? 'You Win!' : `${winnerName} Wins!`,
+          isMe ? 'Great job!' : 'Better luck next time.'
+        );
+      }
     }, 800);
 
     // Save score
@@ -205,11 +228,20 @@ const App = (() => {
 
   // ===== SCORE PERSISTENCE =====
   async function saveScore(winner) {
+    let mode;
+    if (state.mode === 'single') {
+      mode = `single_${state.difficulty}`;
+    } else if (state.mode === 'local') {
+      mode = 'local';
+    } else {
+      mode = 'multiplayer';
+    }
+
     const body = {
       playerXName: state.playerXName,
       playerOName: state.mode === 'single' ? null : state.playerOName,
       winner,
-      mode: state.mode === 'single' ? `single_${state.difficulty}` : 'multiplayer',
+      mode,
     };
 
     try {
@@ -280,6 +312,12 @@ const App = (() => {
           if (state.gameActive) Board.enable();
         }, 400);
       }
+    } else if (state.mode === 'local') {
+      if (!state.gameActive) return;
+
+      // Two humans share the same board: no AI, no socket emit.
+      // makeMove toggles currentTurn so the same board stays interactive.
+      makeMove(index);
     } else if (state.mode === 'multi') {
       if (!state.isMyTurn) return;
       if (!state.gameActive) return;
@@ -398,6 +436,17 @@ const App = (() => {
       showScreen('lobby');
     });
 
+    document.getElementById('btn-local').addEventListener('click', () => {
+      showScreen('localSetup');
+      els.localXName.focus();
+    });
+
+    document.getElementById('btn-local-start').addEventListener('click', () => {
+      startLocalGame();
+    });
+
+    document.getElementById('btn-back-menu-4').addEventListener('click', () => showScreen('menu'));
+
     document.getElementById('btn-leaderboard').addEventListener('click', () => {
       loadLeaderboard();
       showScreen('leaderboard');
@@ -451,7 +500,7 @@ const App = (() => {
 
     // Modal buttons
     document.getElementById('btn-rematch').addEventListener('click', () => {
-      if (state.mode === 'single') {
+      if (state.mode === 'single' || state.mode === 'local') {
         hideModal();
         resetGame();
         updateHeader();
