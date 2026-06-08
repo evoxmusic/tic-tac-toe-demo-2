@@ -6,7 +6,7 @@
 }
 
 :root {
-  --bg-primary: #8b0000;
+  --bg-primary: #0c0a1f;
   --bg-secondary: #1a1a2e;
   --bg-card: #16213e;
   --bg-cell: #1a1a2e;
@@ -47,10 +47,27 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  /* Layered translucent "aurora" glows over the --bg-primary base.
+     Kept transparent so a custom BG_COLOR still shows through. */
   background:
-    radial-gradient(ellipse at 20% 50%, rgba(108, 99, 255, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(255, 107, 157, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, rgba(78, 205, 196, 0.04) 0%, transparent 50%);
+    radial-gradient(ellipse 60% 80% at 15% 10%, rgba(108, 99, 255, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 75% at 85% 20%, rgba(255, 107, 157, 0.13) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 70% at 50% 95%, rgba(78, 205, 196, 0.11) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 60% at 95% 85%, rgba(255, 167, 38, 0.07) 0%, transparent 50%);
+  background-size: 180% 180%;
+  background-position: 0% 0%;
+  animation: bgDrift 24s ease-in-out infinite alternate;
+}
+
+@keyframes bgDrift {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app {
+    animation: none;
+  }
 }
 
 /* ===== SCREENS ===== */
