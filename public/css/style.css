@@ -36,12 +36,26 @@
 html, body {
   height: 100%;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-primary);
+  background: #000;
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
 
+/* ===== LIVE MATRIX RAIN BACKGROUND ===== */
+/* Full-screen canvas painted by js/matrix.js, kept behind all UI. */
+#matrix-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  background: #000;
+}
+
 .app {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   display: flex;
   align-items: center;
