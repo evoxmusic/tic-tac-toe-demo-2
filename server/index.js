@@ -14,7 +14,6 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-const BG_COLOR = process.env.BG_COLOR;
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -24,11 +23,17 @@ app.use(express.json());
 // ===== INDEX (inject configurable background color via BG_COLOR) =====
 // Serves index.html, overriding the --bg-primary CSS variable when BG_COLOR
 // is set. Backward-compatible: without BG_COLOR the page renders unchanged.
+//
+// BG_COLOR is read from process.env on every request rather than captured into
+// a module-level constant at startup. Reading it live ensures an edited value
+// takes effect on the next request instead of being frozen at whatever was
+// present when this module first loaded.
 function serveIndex(req, res) {
   fs.readFile(path.join(PUBLIC_DIR, 'index.html'), 'utf8', (err, html) => {
     if (err) return res.status(500).send('Error loading page');
-    if (BG_COLOR) {
-      const safe = String(BG_COLOR).replace(/[<>"]/g, '');
+    const bgColor = process.env.BG_COLOR;
+    if (bgColor) {
+      const safe = String(bgColor).replace(/[<>"]/g, '');
       const override = `<style>:root{--bg-primary:${safe} !important;}</style>`;
       html = html.replace('</head>', `${override}\n</head>`);
     }
