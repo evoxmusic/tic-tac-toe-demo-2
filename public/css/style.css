@@ -36,12 +36,24 @@
 html, body {
   height: 100%;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-primary);
+  background: #000;
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
 
+/* ===== MATRIX RAIN BACKGROUND ===== */
+#matrix-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: block;
+}
+
 .app {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   display: flex;
   align-items: center;
