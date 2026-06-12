@@ -24,6 +24,8 @@
   --accent-easy: #4ecdc4;
   --accent-medium: #ffa726;
   --accent-hard: #ff6b6b;
+  --brand-red: #e63946;
+  --brand-red-glow: rgba(230, 57, 70, 0.3);
   --border-color: #2a2a4a;
   --border-glow: rgba(108, 99, 255, 0.2);
   --radius: 12px;
