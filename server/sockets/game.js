@@ -17,17 +17,26 @@ function setupGameSockets(io) {
   io.on('connection', (socket) => {
     let currentRoom = null;
 
-    socket.on('create-room', ({ playerName }) => {
+    socket.on('create-room', ({ playerName, size }) => {
       // Generate unique room code
       let roomCode;
       do {
         roomCode = generateRoomCode();
       } while (rooms.has(roomCode));
 
+      // The server owns the board dimensions. Only the supported sizes are
+      // allowed; the win length is derived from the size (3->3, 5->5).
+      const boardSize = size === 5 ? 5 : 3;
+      const winLength = boardSize;
+      const cellCount = boardSize * boardSize;
+
       currentRoom = roomCode;
       rooms.set(roomCode, {
         players: [{ id: socket.id, name: playerName, mark: 'X' }],
-        board: Array(9).fill(null),
+        size: boardSize,
+        winLength,
+        cellCount,
+        board: Array(cellCount).fill(null),
         currentTurn: 'X',
         gameActive: false,
         rematchVotes: 0,
@@ -64,12 +73,16 @@ function setupGameSockets(io) {
         mark: 'X',
         playerX: playerX.name,
         playerO: playerO.name,
+        size: room.size,
+        winLength: room.winLength,
       });
 
       io.to(playerO.id).emit('game-start', {
         mark: 'O',
         playerX: playerX.name,
         playerO: playerO.name,
+        size: room.size,
+        winLength: room.winLength,
       });
     });
 
@@ -85,7 +98,7 @@ function setupGameSockets(io) {
       if (room.currentTurn !== player.mark) return;
 
       // Validate move
-      if (index < 0 || index > 8 || room.board[index] !== null) return;
+      if (index < 0 || index >= room.cellCount || room.board[index] !== null) return;
 
       // Apply move
       room.board[index] = player.mark;
@@ -101,7 +114,7 @@ function setupGameSockets(io) {
       if (!room) return;
 
       room.gameActive = false;
-      room.board = Array(9).fill(null);
+      room.board = Array(room.cellCount).fill(null);
       room.rematchVotes = 0;
     });
 
@@ -117,7 +130,7 @@ function setupGameSockets(io) {
         room.players.forEach(p => {
           p.mark = p.mark === 'X' ? 'O' : 'X';
         });
-        room.board = Array(9).fill(null);
+        room.board = Array(room.cellCount).fill(null);
         room.currentTurn = 'X';
         room.gameActive = true;
         room.rematchVotes = 0;

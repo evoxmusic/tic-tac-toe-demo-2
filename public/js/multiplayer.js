@@ -42,9 +42,9 @@ const Multiplayer = (() => {
     });
   }
 
-  function createRoom(playerName) {
+  function createRoom(playerName, size, winLength) {
     connect();
-    socket.emit('create-room', { playerName });
+    socket.emit('create-room', { playerName, size, winLength });
   }
 
   function joinRoom(roomCode, playerName) {

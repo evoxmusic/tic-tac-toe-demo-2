@@ -28,11 +28,21 @@ const App = (() => {
     modalMessage: document.getElementById('modal-message'),
   };
 
+  // ===== GAME MODES =====
+  // Each mode plays on a `size` x `size` board and requires `winLength` in a row.
+  const MODES = {
+    classic: { size: 3, winLength: 3 },
+    mega: { size: 5, winLength: 5 },
+  };
+
   // ===== STATE =====
   let state = {
     mode: null,           // 'single' or 'multi'
     difficulty: null,     // 'easy', 'medium', 'hard'
-    board: Array(9).fill(null),
+    boardMode: 'classic', // selected menu mode ('classic' | 'mega')
+    config: MODES.classic,// active board config { size, winLength }
+    combos: [],           // winning combos for the active config
+    board: [],
     currentTurn: 'X',
     myMark: 'X',
     playerXName: '',
@@ -68,6 +78,14 @@ const App = (() => {
     return els.playerName.value.trim() || 'Player';
   }
 
+  // Apply a board configuration: store it, build winning combos, and (re)build
+  // the grid. Called before starting any game (single or multiplayer).
+  function configureBoard(size, winLength) {
+    state.config = { size, winLength };
+    state.combos = AI.buildCombos(size, winLength);
+    Board.init(size);
+  }
+
   function startSinglePlayer(difficulty) {
     state.mode = 'single';
     state.difficulty = difficulty;
@@ -75,13 +93,15 @@ const App = (() => {
     state.playerXName = getName();
     state.playerOName = `AI (${difficulty})`;
     state.isMyTurn = true;
+    const mode = MODES[state.boardMode];
+    configureBoard(mode.size, mode.winLength);
     resetGame();
     showScreen('game');
     updateHeader();
   }
 
   function resetGame() {
-    state.board = Array(9).fill(null);
+    state.board = Array(state.config.size * state.config.size).fill(null);
     state.currentTurn = 'X';
     state.gameActive = true;
     state.rematchPending = false;
@@ -141,9 +161,7 @@ const App = (() => {
   }
 
   function getWinCombo(mark) {
-    return AI.WINNING_COMBOS.find(combo =>
-      combo.every(i => state.board[i] === mark)
-    ) || null;
+    return AI.getWinningCombo(state.board, mark, state.combos);
   }
 
   function handleWin(winner, combo) {
@@ -203,13 +221,19 @@ const App = (() => {
     els.modalOverlay.classList.add('hidden');
   }
 
+  // Build the persisted mode string, e.g. "single_hard", "multiplayer_5x5".
+  function gameModeLabel() {
+    const base = state.mode === 'single' ? `single_${state.difficulty}` : 'multiplayer';
+    return state.config.size === 5 ? `${base}_5x5` : base;
+  }
+
   // ===== SCORE PERSISTENCE =====
   async function saveScore(winner) {
     const body = {
       playerXName: state.playerXName,
       playerOName: state.mode === 'single' ? null : state.playerOName,
       winner,
-      mode: state.mode === 'single' ? `single_${state.difficulty}` : 'multiplayer',
+      mode: gameModeLabel(),
     };
 
     try {
@@ -275,7 +299,13 @@ const App = (() => {
       if (state.gameActive) {
         Board.disable();
         setTimeout(() => {
-          const aiMove = AI.getMove([...state.board], state.difficulty, 'O', 'X');
+          const aiMove = AI.getMove([...state.board], state.difficulty, {
+            size: state.config.size,
+            winLength: state.config.winLength,
+            combos: state.combos,
+            aiMark: 'O',
+            humanMark: 'X',
+          });
           makeMove(aiMove);
           if (state.gameActive) Board.enable();
         }, 400);
@@ -312,6 +342,7 @@ const App = (() => {
       state.playerOName = data.playerO;
       state.isMyTurn = data.mark === 'X';
       state.scores = { X: 0, O: 0 };
+      configureBoard(data.size || 3, data.winLength || 3);
       resetGame();
       showScreen('game');
       updateHeader();
@@ -364,10 +395,24 @@ const App = (() => {
     });
   }
 
+  // ===== GAME MODE SELECTION =====
+  function selectMode(key) {
+    if (!MODES[key]) return;
+    state.boardMode = key;
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === key);
+    });
+  }
+
   // ===== EVENT BINDING =====
   function init() {
     Board.setClickHandler(handleCellClick);
     setupMultiplayer();
+
+    // Game mode toggle
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+      btn.addEventListener('click', () => selectMode(btn.dataset.mode));
+    });
 
     // Load saved name
     const savedName = localStorage.getItem('ttt-player-name');
@@ -420,7 +465,8 @@ const App = (() => {
 
     // Lobby buttons
     document.getElementById('btn-create-room').addEventListener('click', () => {
-      Multiplayer.createRoom(getName());
+      const mode = MODES[state.boardMode];
+      Multiplayer.createRoom(getName(), mode.size, mode.winLength);
     });
 
     document.getElementById('btn-join-room').addEventListener('click', () => {
