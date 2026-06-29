@@ -1,27 +1,44 @@
 /**
- * Board rendering and interaction module
+ * Board rendering and interaction module.
+ * The grid is built dynamically so it can host any square board size.
  */
 const Board = (() => {
   const boardEl = document.getElementById('board');
-  const cells = boardEl.querySelectorAll('.cell');
   const winLineEl = document.getElementById('win-line');
   const winLine = winLineEl.querySelector('line');
 
+  let cells = [];
   let onCellClick = null;
-
-  // Initialize click handlers
-  cells.forEach(cell => {
-    cell.addEventListener('click', () => {
-      const index = parseInt(cell.dataset.index);
-      if (onCellClick) onCellClick(index);
-    });
-  });
 
   /**
    * Set the click callback
    */
   function setClickHandler(handler) {
     onCellClick = handler;
+  }
+
+  /**
+   * Build a `size` x `size` grid of cells, replacing any existing board.
+   */
+  function init(size) {
+    boardEl.innerHTML = '';
+    boardEl.dataset.size = size;
+    boardEl.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+    cells = [];
+
+    for (let i = 0; i < size * size; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.index = i;
+      cell.addEventListener('click', () => {
+        const index = parseInt(cell.dataset.index, 10);
+        if (onCellClick) onCellClick(index);
+      });
+      boardEl.appendChild(cell);
+      cells.push(cell);
+    }
+
+    clear();
   }
 
   /**
@@ -67,26 +84,26 @@ const Board = (() => {
   }
 
   /**
-   * Highlight winning cells and draw win line
+   * Highlight winning cells and draw the win line from the first to the last
+   * cell of the combo. Coordinates are read from the live layout so the line
+   * is correct for any board size or responsive cell size.
    */
   function showWin(combo) {
     combo.forEach(i => cells[i].classList.add('win-cell'));
 
-    // Calculate line coordinates
-    // Each cell is 96px with 6px gap, within a 6px padding
-    const cellSize = 96;
-    const gap = 6;
-    const getCenter = (idx) => {
-      const row = Math.floor(idx / 3);
-      const col = idx % 3;
-      const x = col * (cellSize + gap) + cellSize / 2;
-      const y = row * (cellSize + gap) + cellSize / 2;
-      return { x, y };
+    const boardRect = boardEl.getBoundingClientRect();
+    const center = (idx) => {
+      const r = cells[idx].getBoundingClientRect();
+      return {
+        x: r.left - boardRect.left + r.width / 2,
+        y: r.top - boardRect.top + r.height / 2,
+      };
     };
 
-    const start = getCenter(combo[0]);
-    const end = getCenter(combo[2]);
+    const start = center(combo[0]);
+    const end = center(combo[combo.length - 1]);
 
+    winLineEl.setAttribute('viewBox', `0 0 ${boardRect.width} ${boardRect.height}`);
     winLine.setAttribute('x1', start.x);
     winLine.setAttribute('y1', start.y);
     winLine.setAttribute('x2', end.x);
@@ -98,5 +115,5 @@ const Board = (() => {
     });
   }
 
-  return { setClickHandler, setCell, clear, disable, enable, showWin };
+  return { setClickHandler, init, setCell, clear, disable, enable, showWin };
 })();
